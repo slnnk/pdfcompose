@@ -1,0 +1,17 @@
+syntax = "proto3";
+option go_package="github.com/slnnk/pdfcompose";
+package pdfcompose;
+
+service PdfComposeService {
+	rpc Send (SendParams) returns (Responce) {}
+}
+
+message SendParams {
+    bytes File1 = 1;
+    bytes File2 = 2;
+    bytes File3 = 3;
+}
+
+message Responce {
+    bytes File = 1;
+}
