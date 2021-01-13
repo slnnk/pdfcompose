@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package="github.com/slnnk/pdfcompose";
+option go_package="models;pdfcompose";
 package pdfcompose;
 
 service PdfComposeService {
