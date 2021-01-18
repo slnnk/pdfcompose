@@ -18,6 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PdfComposeServiceClient interface {
 	Send(ctx context.Context, in *SendParams, opts ...grpc.CallOption) (*Responce, error)
+	UploadStreams(ctx context.Context, opts ...grpc.CallOption) (PdfComposeService_UploadStreamsClient, error)
 }
 
 type pdfComposeServiceClient struct {
@@ -37,11 +38,43 @@ func (c *pdfComposeServiceClient) Send(ctx context.Context, in *SendParams, opts
 	return out, nil
 }
 
+func (c *pdfComposeServiceClient) UploadStreams(ctx context.Context, opts ...grpc.CallOption) (PdfComposeService_UploadStreamsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PdfComposeService_ServiceDesc.Streams[0], "/pdfcompose.PdfComposeService/UploadStreams", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &pdfComposeServiceUploadStreamsClient{stream}
+	return x, nil
+}
+
+type PdfComposeService_UploadStreamsClient interface {
+	Send(*UploadFileRequest) error
+	Recv() (*UploadFileResponce, error)
+	grpc.ClientStream
+}
+
+type pdfComposeServiceUploadStreamsClient struct {
+	grpc.ClientStream
+}
+
+func (x *pdfComposeServiceUploadStreamsClient) Send(m *UploadFileRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *pdfComposeServiceUploadStreamsClient) Recv() (*UploadFileResponce, error) {
+	m := new(UploadFileResponce)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PdfComposeServiceServer is the server API for PdfComposeService service.
 // All implementations must embed UnimplementedPdfComposeServiceServer
 // for forward compatibility
 type PdfComposeServiceServer interface {
 	Send(context.Context, *SendParams) (*Responce, error)
+	UploadStreams(PdfComposeService_UploadStreamsServer) error
 	mustEmbedUnimplementedPdfComposeServiceServer()
 }
 
@@ -51,6 +84,9 @@ type UnimplementedPdfComposeServiceServer struct {
 
 func (UnimplementedPdfComposeServiceServer) Send(context.Context, *SendParams) (*Responce, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
+}
+func (UnimplementedPdfComposeServiceServer) UploadStreams(PdfComposeService_UploadStreamsServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadStreams not implemented")
 }
 func (UnimplementedPdfComposeServiceServer) mustEmbedUnimplementedPdfComposeServiceServer() {}
 
@@ -83,6 +119,32 @@ func _PdfComposeService_Send_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PdfComposeService_UploadStreams_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PdfComposeServiceServer).UploadStreams(&pdfComposeServiceUploadStreamsServer{stream})
+}
+
+type PdfComposeService_UploadStreamsServer interface {
+	Send(*UploadFileResponce) error
+	Recv() (*UploadFileRequest, error)
+	grpc.ServerStream
+}
+
+type pdfComposeServiceUploadStreamsServer struct {
+	grpc.ServerStream
+}
+
+func (x *pdfComposeServiceUploadStreamsServer) Send(m *UploadFileResponce) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *pdfComposeServiceUploadStreamsServer) Recv() (*UploadFileRequest, error) {
+	m := new(UploadFileRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // PdfComposeService_ServiceDesc is the grpc.ServiceDesc for PdfComposeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -95,6 +157,13 @@ var PdfComposeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PdfComposeService_Send_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadStreams",
+			Handler:       _PdfComposeService_UploadStreams_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "models/models.proto",
 }
